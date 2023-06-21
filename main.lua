@@ -1,59 +1,78 @@
--- ____________________________   Platform    ________________________________
-local platform = {}
-platform.position_x = 500
-platform.position_y = 550
-platform.speed_x = 300
-platform.width = 60
-platform.height = 20
+-- ____________________________   plataforma    ________________________________
+local plataforma = {}
+plataforma.position_x = 500
+plataforma.position_y = 550
+plataforma.speed_x = 300
+plataforma.width = 60
+plataforma.height = 20
 
-function platform.update(dt)
+function plataforma.update(dt)
    if love.keyboard.isDown("right") then
-      platform.position_x = platform.position_x + (platform.speed_x * dt)
+      plataforma.position_x = plataforma.position_x + (plataforma.speed_x * dt)
    end
    if love.keyboard.isDown("left") then
-      platform.position_x = platform.position_x - (platform.speed_x * dt)
+      plataforma.position_x = plataforma.position_x - (plataforma.speed_x * dt)
+   end
+   -- _______________________________________   En Linea   __________________________________________
+   if love.keyboard.isDown("up") then
+      x = plataforma.position_x
+      i = #ladrillos.nivel_actual_ladrillos
+      j = i - 10
+      print(x)
+      print(i)
+      print(j)
+
+      for i = #ladrillos.nivel_actual_ladrillos, j, -1 do
+         if ladrillos.top_left_position_x >= plataforma.position_x - 10 or ladrillos.top_left_position_x <= plataforma.position_x + 10 then
+            c = ladrillos.nivel_actual_ladrillos
+            print(i)
+            --print(brick.position_x)
+            print(ladrillos.top_left_position_x)
+         end
+      end
    end
 end
 
-function platform.draw()
+function plataforma.draw()
    love.graphics.rectangle('line',
-      platform.position_x,
-      platform.position_y,
-      platform.width,
-      platform.height)
+      plataforma.position_x,
+      plataforma.position_y,
+      plataforma.width,
+      plataforma.height)
 end
 
-function platform.bounce_from_wall(shift_platform_x, shift_platform_y)
-   platform.position_x = platform.position_x + shift_platform_x
+function plataforma.rebote_desde_la_pared(shift_plataforma_x, shift_plataforma_y)
+   plataforma.position_x = plataforma.position_x + shift_plataforma_x
 end
 
--- _______________________________  Bricks  ______________________________________
-local bricks = {}
-bricks.rows = 4
-bricks.columns = 10
-bricks.top_left_position_x = 150
-bricks.top_left_position_y = 20
-bricks.brick_width = 60
-bricks.brick_height = 30
-bricks.horizontal_distance = 3
-bricks.vertical_distance = 5
-bricks.current_level_bricks = {}
+-- _______________________________  ladrillos  ______________________________________
+ladrillos = {}
+ladrillos.rows = 4
+ladrillos.columns = 10
+ladrillos.top_left_position_x = 150
+ladrillos.top_left_position_y = 20
+ladrillos.brick_width = 60
+ladrillos.brick_height = 30
+ladrillos.distancia_horizontal = 3
+ladrillos.distancia_vertical = 5
+ladrillos.nivel_actual_ladrillos = {}
+ladrillos.no_more_bricks = false
 
-function bricks.new_brick(position_x, position_y, width, height)
+function ladrillos.new_brick(position_x, position_y, width, height)
    return ({ position_x = position_x,
       position_y = position_y,
-      width = width or bricks.brick_width,
-      height = height or bricks.brick_height })
+      width = width or ladrillos.brick_width,
+      height = height or ladrillos.brick_height })
 end
 
-function bricks.add_to_current_level_bricks(brick)
-   table.insert(bricks.current_level_bricks, brick)
+function ladrillos.añadirLadrillosNivelActual(brick)
+   table.insert(ladrillos.nivel_actual_ladrillos, brick)
 end
 
-function bricks.update_brick(single_brick)
+function ladrillos.update_brick(single_brick)
 end
 
-function bricks.draw_brick(single_brick)
+function ladrillos.draw_brick(single_brick)
    love.graphics.rectangle('line',
       single_brick.position_x,
       single_brick.position_y,
@@ -61,108 +80,119 @@ function bricks.draw_brick(single_brick)
       single_brick.height)
 end
 
-function bricks.construct_level()
-   for row = 1, bricks.rows do
-      for col = 1, bricks.columns do
-         local new_brick_position_x = bricks.top_left_position_x +
-             (col - 1) *
-             (bricks.brick_width + bricks.horizontal_distance)
-         local new_brick_position_y = bricks.top_left_position_y +
-             (row - 1) *
-             (bricks.brick_height + bricks.vertical_distance)
-         local new_brick = bricks.new_brick(new_brick_position_x,
-            new_brick_position_y)
-         bricks.add_to_current_level_bricks(new_brick)
+function ladrillos.construct_level(level_bricks_arrangement)
+   ladrillos.no_more_ladrillos = false
+   for row_index, row in ipairs(level_bricks_arrangement) do
+      for col_index, bricktype in ipairs(row) do
+         if bricktype ~= 0 then
+            local new_brick_position_x = ladrillos.top_left_position_x +
+                (col_index - 1) *
+                (ladrillos.brick_width + ladrillos.distancia_horizontal)
+            local new_brick_position_y = ladrillos.top_left_position_y +
+                (row_index - 1) *
+                (ladrillos.brick_height + ladrillos.distancia_vertical)
+            local new_brick = ladrillos.new_brick(new_brick_position_x,
+               new_brick_position_y)
+            ladrillos.añadirLadrillosNivelActual(new_brick)
+         end
       end
    end
 end
 
-function bricks.update(dt)
-   for _, brick in pairs(bricks.current_level_bricks) do
-      bricks.update_brick(brick)
+function ladrillos.update(dt)
+   if #ladrillos.nivel_actual_ladrillos == 0 then
+      ladrillos.no_more_bricks = true
+   else
+      for _, brick in pairs(ladrillos.nivel_actual_ladrillos) do
+         ladrillos.update_brick(brick)
+      end
    end
 end
 
-function bricks.draw()
-   for _, brick in pairs(bricks.current_level_bricks) do
-      bricks.draw_brick(brick)
+function ladrillos.draw()
+   for _, brick in pairs(ladrillos.nivel_actual_ladrillos) do
+      ladrillos.draw_brick(brick)
    end
 end
 
--- _____________________________  Walls   _________________________________
-local walls = {}
-walls.wall_thickness = 20
-walls.current_level_walls = {}
+function ladrillos.brick_hit_by_ball(i, brick, shift_ball_x, shift_ball_y)
+   table.remove(ladrillos.nivel_actual_ladrillos, i)
+end
 
-function walls.new_wall(position_x, position_y, width, height)
+-- _____________________________  Paredes   _________________________________
+local paredes = {}
+paredes.espesor_de_pared = 20
+paredes.nivel_actual_paredes = {}
+
+function paredes.nueva_pared(position_x, position_y, width, height)
    return ({ position_x = position_x,
       position_y = position_y,
       width = width,
       height = height })
 end
 
-function walls.update_wall(single_wall)
+function paredes.update_wall(pared_sencilla)
 end
 
-function walls.draw_wall(single_wall)
+function paredes.draw_wall(pared_sencilla)
    love.graphics.rectangle('line',
-      single_wall.position_x,
-      single_wall.position_y,
-      single_wall.width,
-      single_wall.height)
+      pared_sencilla.position_x,
+      pared_sencilla.position_y,
+      pared_sencilla.width,
+      pared_sencilla.height)
 end
 
-function walls.construct_walls()
-   local left_wall = walls.new_wall(
+function paredes.construcion_paredes()
+   local left_wall = paredes.nueva_pared(
       0,
       0,
-      walls.wall_thickness + 125,
+      paredes.espesor_de_pared + 125,
       love.graphics.getHeight()
    )
-   local right_wall = walls.new_wall(
-      love.graphics.getWidth() - walls.wall_thickness,
+   local right_wall = paredes.nueva_pared(
+      love.graphics.getWidth() - paredes.espesor_de_pared,
       0,
-      walls.wall_thickness,
+      paredes.espesor_de_pared,
       love.graphics.getHeight()
    )
-   local top_wall = walls.new_wall(
+   local top_wall = paredes.nueva_pared(
       0,
       0,
       love.graphics.getWidth(),
-      walls.wall_thickness
+      paredes.espesor_de_pared
    )
-   local bottom_wall = walls.new_wall(
+   local bottom_wall = paredes.nueva_pared(
       0,
-      love.graphics.getHeight() - walls.wall_thickness,
+      love.graphics.getHeight() - paredes.espesor_de_pared,
       love.graphics.getWidth(),
-      walls.wall_thickness
+      paredes.espesor_de_pared
    )
-   walls.current_level_walls["left"] = left_wall
-   walls.current_level_walls["right"] = right_wall
-   walls.current_level_walls["top"] = top_wall
-   walls.current_level_walls["bottom"] = bottom_wall
+   paredes.nivel_actual_paredes["left"] = left_wall
+   paredes.nivel_actual_paredes["right"] = right_wall
+   paredes.nivel_actual_paredes["top"] = top_wall
+   paredes.nivel_actual_paredes["bottom"] = bottom_wall
 end
 
-function walls.update(dt)
-   for _, wall in pairs(walls.current_level_walls) do
-      walls.update_wall(wall)
+function paredes.update(dt)
+   for _, wall in pairs(paredes.nivel_actual_paredes) do
+      paredes.update_wall(wall)
    end
 end
 
-function walls.draw()
-   for _, wall in pairs(walls.current_level_walls) do
-      walls.draw_wall(wall)
+function paredes.draw()
+   for _, wall in pairs(paredes.nivel_actual_paredes) do
+      paredes.draw_wall(wall)
    end
 end
 
--- ___________________________________________Collisions  _________________________________________
-local collisions = {}
+-- ___________________________________________Colisiones  _________________________________________
+local colisiones = {}
 
-function collisions.resolve_collisions()
-   collisions.platform_walls_collision(platform, walls)
+function colisiones.resolver_colisiones()
+   colisiones.colision_plataforma_paredes(plataforma, paredes)
 end
 
-function collisions.check_rectangles_overlap(a, b)
+function colisiones.check_rectangles_overlap(a, b)
    local overlap = false
    local shift_b_x, shift_b_y = 0, 0
    if not (a.x + a.width < b.x or b.x + b.width < a.x or
@@ -182,37 +212,65 @@ function collisions.check_rectangles_overlap(a, b)
    return overlap, shift_b_x, shift_b_y
 end
 
-function collisions.platform_walls_collision()
-   local overlap, shift_platform_x, shift_platform_y
+function colisiones.colision_plataforma_paredes()
+   local overlap, shift_plataforma_x, shift_plataforma_y
    local b = {
-      x = platform.position_x,
-      y = platform.position_y,
-      width = platform.width,
-      height = platform.height
+      x = plataforma.position_x,
+      y = plataforma.position_y,
+      width = plataforma.width,
+      height = plataforma.height
    }
-   for _, wall in pairs(walls.current_level_walls) do
+   for _, wall in pairs(paredes.nivel_actual_paredes) do
       local a = {
          x = wall.position_x,
          y = wall.position_y,
          width = wall.width,
          height = wall.height
       }
-      overlap, shift_platform_x, shift_platform_y =
-          collisions.check_rectangles_overlap(a, b)
+      overlap, shift_plataforma_x, shift_plataforma_y =
+          colisiones.check_rectangles_overlap(a, b)
       if overlap then
-         platform.bounce_from_wall(shift_platform_x,
-            shift_platform_y)
+         plataforma.rebote_desde_la_pared(shift_plataforma_x,
+            shift_plataforma_y)
       end
    end
 end
 
--- _______________________________________   En Linea   __________________________________________
+-- _____________________________________    Niveles  ___________________________________________________
+local niveles = {}
+niveles.nivelActual = 1
+niveles.finGame = false
+niveles.secuencia = {}
+niveles.secuencia[1] = {
+   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+   { 1, 0, 1, 0, 1, 1, 1, 0, 1, 0 },
+   { 1, 0, 1, 0, 1, 0, 0, 0, 1, 0 },
+   { 1, 1, 1, 0, 1, 1, 0, 0, 0, 1 },
+   { 1, 0, 1, 0, 1, 0, 0, 0, 0, 1 },
+   { 1, 0, 1, 0, 1, 1, 1, 0, 0, 1 },
+   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+}
 
-function enLinea()
-   if love.keyboard.isDown("up") then
+niveles.secuencia[2] = {
+   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+   { 1, 1, 0, 0, 1, 0, 1, 0, 1, 1 },
+   { 1, 0, 1, 0, 1, 0, 1, 0, 1, 0 },
+   { 1, 1, 1, 0, 0, 1, 0, 0, 1, 1 },
+   { 1, 0, 1, 0, 0, 1, 0, 0, 1, 0 },
+   { 1, 1, 1, 0, 0, 1, 0, 0, 1, 1 },
+   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+}
 
-   elseif love.keyboard.isDown("down") then
-
+function niveles.cambiar_al_siguiente_nivel(ladrillos)
+   if ladrillos.no_more_ladrillos then
+      if niveles.nivelActual < #niveles.secuencia then
+         niveles.nivelActual = niveles.nivelActual + 1
+         ladrillos.construct_level(niveles.secuencia[niveles.nivelActual])
+      else
+         niveles.finGame = true
+      end
    end
 end
 
@@ -224,23 +282,38 @@ function love.load()
       love_window_height,
       { fullscreen = false })
 
-   bricks.construct_level()
-   walls.construct_walls()
+   ladrillos.construct_level(niveles.secuencia[niveles.nivelActual])
+   paredes.construcion_paredes()
 end
 
 -- _______________________________________   UPDATE  ________________________________________________
 function love.update(dt)
-   platform.update(dt)
-   bricks.update(dt)
-   walls.update(dt)
-   collisions.resolve_collisions()
+   plataforma.update(dt)
+   ladrillos.update(dt)
+   paredes.update(dt)
+   colisiones.resolver_colisiones()
+   --enLinea.update()
+   niveles.cambiar_al_siguiente_nivel(ladrillos)
+   if love.keyboard.isDown("up") then
+      print(plataforma.position_x)
+      for i, brick in pairs(ladrillos.nivel_actual_ladrillos, i) do
+         if ladrillos.top_left_position_x == plataforma.position_x then
+            print("ladrillos.top_left_position_x")
+         end
+      end
+   end
 end
 
 -- _______________________________________   DRAW  ________________________________________________
 function love.draw()
-   platform.draw()
-   bricks.draw()
-   walls.draw()
+   plataforma.draw()
+   ladrillos.draw()
+   paredes.draw()
+   if niveles.finGame then
+      love.graphics.printf("Congratulations!\n" ..
+         "You have finished the game!",
+         300, 250, 200, "center")
+   end
 end
 
 -- _______________________________________   QUIT  ________________________________________________
@@ -251,5 +324,5 @@ function love.keyreleased(key, code)
 end
 
 function love.quit()
-   print("Thanks for playing! Come back soon!")
+   print("Gracias por jugar! Vuelve pronto!")
 end
